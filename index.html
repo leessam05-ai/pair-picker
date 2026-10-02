@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>짝 정하기</title>
+<style>
+  :root { --card:#fff; --accent:#ff7a59; --accent2:#4aa3df; --text:#3b3347; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:28px 16px 56px; color:var(--text); min-height:100vh;
+         background:linear-gradient(135deg,#ffe29f 0%,#ffa99f 45%,#a18cd1 100%) fixed;
+         font-family:"Malgun Gothic","맑은 고딕",sans-serif; overflow-x:hidden; }
+  /* 떠다니는 배경 장식 */
+  .deco { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .deco span { position:absolute; bottom:-60px; font-size:2rem; opacity:.35; animation:float linear infinite; }
+  @keyframes float { to { transform:translateY(-115vh) rotate(360deg); } }
+  .wrap { max-width:960px; margin:0 auto; position:relative; z-index:1; }
+  h1 { text-align:center; margin:0 0 6px; font-size:2.8rem; color:#fff; letter-spacing:2px;
+       text-shadow:0 3px 0 #0002, 0 6px 16px #0003; }
+  h1 .dice { display:inline-block; animation:wiggle 2.4s ease-in-out infinite; }
+  @keyframes wiggle { 0%,100% { transform:rotate(-12deg); } 50% { transform:rotate(12deg) scale(1.1); } }
+  .sub { text-align:center; color:#fff; margin:0 0 22px; font-size:1.05rem; text-shadow:0 1px 6px #0003; }
+  .panel { background:#ffffffe6; backdrop-filter:blur(6px); border-radius:24px; padding:22px;
+           box-shadow:0 10px 30px #0002; margin-bottom:24px; }
+  label { font-weight:bold; display:block; margin-bottom:10px; }
+  textarea { width:100%; height:130px; font-size:1.15rem; padding:12px 14px; border:3px solid #eadfff;
+             border-radius:14px; font-family:inherit; resize:vertical; background:#fdfbff; transition:.2s; }
+  textarea:focus { outline:none; border-color:#a18cd1; box-shadow:0 0 0 4px #a18cd133; }
+  .hint { color:#8a7fa0; font-size:.95rem; margin-top:8px; }
+  .hint b { color:var(--accent); font-size:1.1rem; }
+  .sizes { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; }
+  .sizes button { flex:1 1 90px; font-size:1.3rem; font-family:inherit; font-weight:bold; padding:14px 8px;
+                  border:none; border-radius:16px; color:#fff; cursor:pointer;
+                  background:linear-gradient(180deg,#ff9a76,#ff6b4a); box-shadow:0 5px 0 #d4492b, 0 8px 14px #0002;
+                  transition:transform .12s, box-shadow .12s; }
+  .sizes button:hover { transform:translateY(-3px); box-shadow:0 8px 0 #d4492b, 0 12px 18px #0002; }
+  .sizes button:active { transform:translateY(4px); box-shadow:0 1px 0 #d4492b; }
+  #msg { color:#d33; font-weight:bold; margin-top:12px; min-height:1.2em; }
+  #groups { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; }
+  .group { background:var(--card); border-radius:22px; padding:18px; box-shadow:0 8px 22px #0002;
+           position:relative; overflow:hidden; animation:pop .55s cubic-bezier(.3,1.5,.5,1) both; transition:transform .2s; }
+  .group::before { content:""; position:absolute; left:0; right:0; top:0; height:10px; background:var(--c); }
+  .group:hover { transform:translateY(-5px) rotate(-.6deg); }
+  @keyframes pop { from { opacity:0; transform:scale(.6) rotate(-6deg); } to { opacity:1; transform:none; } }
+  .group h2 { margin:6px 0 12px; font-size:1.15rem; color:var(--c); display:flex; align-items:center; gap:8px; }
+  .group h2 .num { background:var(--c); color:#fff; width:34px; height:34px; border-radius:50%;
+                   display:inline-flex; align-items:center; justify-content:center; font-size:1.05rem; }
+  .group h2 small { margin-left:auto; color:#aaa; font-weight:normal; font-size:.85rem; }
+  .names { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .name { background:var(--c); color:#fff; padding:7px 16px; border-radius:22px; font-size:1.3rem; font-weight:bold;
+          box-shadow:0 3px 0 #0003; animation:drop .5s ease both; }
+  @keyframes drop { from { opacity:0; transform:translateY(-18px); } to { opacity:1; transform:none; } }
+  .greet { background:linear-gradient(135deg,#fffbea,#fff3f0); border:2px dashed var(--c); border-radius:14px;
+           padding:12px; font-size:1.05rem; line-height:1.6; }
+  .greet b { color:var(--c); }
+  .again { text-align:center; margin:26px 0 0; }
+  .again button { font-family:inherit; font-size:1.15rem; font-weight:bold; padding:13px 28px; border:none;
+                  border-radius:30px; background:linear-gradient(180deg,#6cbcf0,#3b8fd0); color:#fff; cursor:pointer;
+                  box-shadow:0 5px 0 #2a6ea3, 0 8px 14px #0002; transition:transform .12s; }
+  .again button:hover { transform:translateY(-3px); }
+  .again button:active { transform:translateY(4px); box-shadow:0 1px 0 #2a6ea3; }
+  /* 색종이 */
+  .confetti { position:fixed; top:-20px; width:10px; height:14px; z-index:5; pointer-events:none;
+              animation:fall linear forwards; }
+  @keyframes fall { to { transform:translateY(105vh) rotate(720deg); opacity:.8; } }
+  @media (max-width:520px) { h1 { font-size:2.1rem; } }
+</style>
+</head>
+<body>
+<div class="deco" id="deco"></div>
+<div class="wrap">
+  <h1><span class="dice">🎲</span> 짝 정하기</h1>
+  <p class="sub">이름을 넣고 버튼을 누르면 모둠이 짠! ✨</p>
+
+  <div class="panel">
+    <label for="names">✏️ 아이들 이름 (줄바꿈, 쉼표, 띄어쓰기로 구분)</label>
+    <textarea id="names" placeholder="예) 민수, 지아, 서준&#10;하윤&#10;도현"></textarea>
+    <div class="hint" id="count">이름을 입력하세요.</div>
+    <div class="sizes" id="sizes"></div>
+    <div id="msg"></div>
+  </div>
+
+  <div id="groups"></div>
+  <div class="again" id="again" hidden><button id="reshuffle">🔀 같은 인원으로 다시 섞기</button></div>
+</div>
+
+<script>
+const COLORS = ['#ff7a59','#4aa3df','#4caf50','#9c6ade','#e8a400','#e0559b','#26a69a','#8d6e63'];
+const $ = id => document.getElementById(id);
+let lastSize = 0;
+
+// 배경 장식
+['⭐','🎈','✏️','📚','🌈','🍀','🎨','🧩'].forEach((e, i) => {
+  for (let k = 0; k < 2; k++) {
+    const s = document.createElement('span');
+    s.textContent = e;
+    s.style.left = Math.random() * 100 + '%';
+    s.style.fontSize = (1.5 + Math.random() * 1.8) + 'rem';
+    s.style.animationDuration = (14 + Math.random() * 14) + 's';
+    s.style.animationDelay = (-Math.random() * 20) + 's';
+    $('deco').appendChild(s);
+  }
+});
+
+function confetti() {
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('i');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = COLORS[i % COLORS.length];
+    c.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+    c.style.animationDelay = (Math.random() * .4) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+try { $('names').value = localStorage.getItem('pairNames') || ''; } catch (e) {}
+
+function getNames() {
+  const list = $('names').value.split(/[\n,\t]+|\s{1,}/).map(s => s.trim()).filter(Boolean);
+  return [...new Set(list)];
+}
+
+function updateCount() {
+  const n = getNames().length;
+  $('count').innerHTML = n ? `현재 <b>${n}</b>명` : '이름을 입력하세요.';
+  try { localStorage.setItem('pairNames', $('names').value); } catch (e) {}
+}
+$('names').addEventListener('input', updateCount);
+updateCount();
+
+for (let s = 2; s <= 7; s++) {
+  const b = document.createElement('button');
+  b.textContent = `${s}명씩`;
+  b.onclick = () => makeGroups(s);
+  $('sizes').appendChild(b);
+}
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeGroups(size) {
+  const names = getNames();
+  $('msg').textContent = '';
+  if (names.length < 2) { $('msg').textContent = '이름을 2명 이상 입력해 주세요.'; return; }
+  if (names.length < size) { $('msg').textContent = `${size}명씩 나누려면 최소 ${size}명이 필요해요.`; return; }
+  lastSize = size;
+
+  const shuffled = shuffle(names);
+  // 모둠 수는 내림, 남는 친구는 앞 모둠부터 한 명씩 더해서 골고루 나눔
+  const count = Math.floor(names.length / size);
+  const extra = names.length % size;
+  const box = $('groups');
+  box.innerHTML = '';
+  let idx = 0;
+  for (let g = 0; g < count; g++) {
+    const n = size + (g < extra ? 1 : 0);
+    const members = shuffled.slice(idx, idx + n);
+    idx += n;
+    const color = COLORS[g % COLORS.length];
+    const el = document.createElement('div');
+    el.className = 'group';
+    el.style.setProperty('--c', color);
+    el.style.animationDelay = (g * 0.1) + 's';
+    el.innerHTML =
+      `<h2><span class="num">${g + 1}</span>${g + 1}모둠<small>${n}명</small></h2>` +
+      `<div class="names">${members.map((m, i) => `<span class="name" style="animation-delay:${g * 0.1 + 0.25 + i * 0.12}s">${esc(m)}</span>`).join('')}</div>` +
+      `<div class="greet">👋 <b>${members.map(esc).join(', ')}</b><br>누구라도 환영하고 함께 해요!</div>`;
+    box.appendChild(el);
+  }
+  $('again').hidden = false;
+  confetti();
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+$('reshuffle').onclick = () => lastSize && makeGroups(lastSize);
+</script>
+</body>
+</html>
